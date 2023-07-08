@@ -12,21 +12,29 @@
 
 	<div>
 		<label>Background Color:</label>
-		<input id="inputColorBackgroundAsStringRgb" value="rgb(0, 128, 128)"></input>
+		<input id="inputColorBackgroundAsStringRgb" value="rgb(0, 64, 64)"></input>
 	</div>
 
 	<div>
 		<label>Color Palette:</label>
 		<button onclick="buttonColorPaletteLoadDefault_Clicked()">Load Default</button>
 		<br />
-		<textarea id="textareaColorPalette" cols="20" rows="10"></textarea>
+		<textarea
+			id="textareaColorPalette"
+			cols="20" rows="10"
+			spellcheck="false">
+		</textarea>
 	</div>
 
 	<div>
 		<label>Image Cells As Characters:</label>
 		<button onclick="buttonImageCellsAsCharactersLoadDemo_Clicked()">Load Demo</button>
 		<br />
-		<textarea id="textareaImageCellsAsCharacters" cols="16" rows="16"></textarea>
+		<textarea
+			id="textareaImageCellsAsCharacters"
+			cols="16" rows="16"
+			spellcheck="false">
+		</textarea>
 	</div>
 
 	<div>
@@ -144,7 +152,6 @@ class ColorPalette
 		var colorMappingsAsLines = 
 		[
 			"k:Black",
-			"n:Brown",
 			"r:Red",
 			"o:Orange",
 			"y:Yellow",
@@ -154,6 +161,18 @@ class ColorPalette
 			"v:Violet",
 			"a:Gray",
 			"w:White",
+
+			"K:rgb(32, 32, 32)", // near-black
+			"R:DarkRed",
+			"O:Brown",
+			"Y:Gold",
+			"G:DarkGreen",
+			"C:rgb(0, 128, 128)", // "gunmetal"
+			"B:DarkBlue",
+			"V:Purple",
+			"A:DarkGray",
+			"W:LightGray",
+
 			".:rgba(0, 0, 0, 0)"
 		];
 		var newline = "\n";
@@ -175,7 +194,7 @@ class ColorPalette
 	colorByCode(code)
 	{
 		var mapping = this.colorMappings.find(x => x.code == code);
-		var color = mapping.color;
+		var color = (mapping == null ? null : mapping.color);
 		return color;
 	}
 
@@ -225,7 +244,7 @@ class TextToImageConverter
 	)
 	{
 		this.colorBackgroundAsStringRgb =
-			colorBackgroundAsStringRgb || "rgb(0, 128, 128)";
+			colorBackgroundAsStringRgb || "rgb(0, 64, 64)";
 		this.colorPalette =
 			colorPalette || ColorPalette.default();
 		this.pixelsPerCell =
@@ -238,19 +257,18 @@ class TextToImageConverter
 	{
 		var cellsAsStrings =
 		[
-			".............",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			".knroygcbvaw.",
-			"............."
+			"............",
+			".kroygcbvaw.",
+			".KROYGCBVAW.",
+			".kroygcbvaw.",
+			".KROYGCBVAW.",
+			".kroygcbvaw.",
+			".KROYGCBVAW.",
+			".kroygcbvaw.",
+			".KROYGCBVAW.",
+			".kroygcbvaw.",
+			".KROYGCBVAW.",
+			"............"
 		];
 
 		var newline = "\n";
@@ -318,21 +336,24 @@ class TextToImageConverter
 				var cellCode = cellRowAsString[x];
 				var cellColor = this.colorByCode(cellCode);
 
-				graphics.fillStyle = cellColor;
+				if (cellColor != null)
+				{
+					graphics.fillStyle = cellColor;
 
-				drawPos.overwriteWith
-				(
-					cellPos
-				).multiplyScalar
-				(
-					pixelsPerCell
-				);
+					drawPos.overwriteWith
+					(
+						cellPos
+					).multiplyScalar
+					(
+						pixelsPerCell
+					);
 
-				graphics.fillRect
-				(
-					drawPos.x, drawPos.y,
-					pixelsPerCell, pixelsPerCell
-				)
+					graphics.fillRect
+					(
+						drawPos.x, drawPos.y,
+						pixelsPerCell, pixelsPerCell
+					);
+				}
 			}
 		}
 
