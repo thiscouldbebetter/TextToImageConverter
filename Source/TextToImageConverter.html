@@ -1,0 +1,304 @@
+<html>
+<body>
+
+<div id="divUi">
+
+	<h3>Text to Image Converter</h3>
+	<p>
+		Specify a palette and the characters that encode each color,
+		then a block of text whose characters represent the pixels of an image,
+		then click the Render button.
+	</p>
+
+	<div>
+		<label>Color Palette:</label>
+		<button onclick="buttonColorPaletteLoadDefault_Clicked()">Load Default</button>
+		<br />
+		<textarea id="textareaColorPalette" cols="20" rows="10"></textarea>
+	</div>
+
+	<div>
+		<label>Image Cells As Characters:</label>
+		<button onclick="buttonImageCellsAsCharactersLoadDemo_Clicked()">Load Demo</button>
+		<br />
+		<textarea id="textareaImageCellsAsCharacters" cols="16" rows="16"></textarea>
+	</div>
+
+	<div>
+		<label>Pixels per Cell:</label>
+		<input id="inputPixelsPerCell" type="number" min="1" max="128" step="1" value="16"></input>
+	</div>
+
+	<button onclick="buttonRenderImage_Clicked()">Render Image</button>
+
+	<div>
+		<label>Image Rendered:</label>
+		<br />
+		<div id="divOutput"></div>
+	</div>
+
+</div>
+
+<script type="text/javascript">
+
+// UI event handlers.
+
+function buttonColorPaletteLoadDefault_Clicked()
+{
+	var colorPalette = ColorPalette.default();
+	var colorPaletteAsString = colorPalette.toString();
+
+	var d = document;
+	var textareaColorPalette = d.getElementById("textareaColorPalette");
+	textareaColorPalette.value = colorPaletteAsString;
+}
+
+function buttonImageCellsAsCharactersLoadDemo_Clicked()
+{
+	var imageCellsAsString = TextToImageConverter.imageCellsAsStringDemo();
+
+	var d = document;
+	var textareaImageCellsAsCharacters =
+		d.getElementById("textareaImageCellsAsCharacters");
+	textareaImageCellsAsCharacters.value = imageCellsAsString;
+}
+
+function buttonRenderImage_Clicked()
+{
+	var d = document;
+
+	var textareaColorPalette = d.getElementById("textareaColorPalette");
+	var colorPaletteAsString = textareaColorPalette.value;
+	var colorPalette = ColorPalette.fromString(colorPaletteAsString);
+
+	var textareaImageCellsAsCharacters =
+		d.getElementById("textareaImageCellsAsCharacters");
+	var imageCellsAsString = textareaImageCellsAsCharacters.value;
+
+	var inputPixelsPerCell = d.getElementById("inputPixelsPerCell");
+	var pixelsPerCell = parseInt(inputPixelsPerCell.value);
+
+	var textToImageConverter = new TextToImageConverter
+	(
+		colorPalette,
+		pixelsPerCell,
+		imageCellsAsString
+	);
+
+	var imageRenderedAsCanvas = textToImageConverter.toCanvas();
+
+	var divOutput = d.getElementById("divOutput");
+	divOutput.innerHTML = "";
+	divOutput.appendChild(imageRenderedAsCanvas);
+
+}
+
+// Classes.
+
+class ColorMapping
+{
+	constructor(code, color)
+	{
+		this.code = code;
+		this.color = color;
+	}
+
+	static fromString(colorMappingAsString)
+	{
+		var codeAndColor = colorMappingAsString.split(":");
+		var code = codeAndColor[0];
+		var color = codeAndColor[1];
+		var colorMapping = new ColorMapping(code, color);
+		return colorMapping;
+	}
+
+	toString()
+	{
+		return this.code + ":" + this.color;
+	}
+}
+
+class ColorPalette
+{
+	constructor(colorMappings)
+	{
+		this.colorMappings = colorMappings;
+	}
+
+	static default()
+	{
+		var colorMappingsAsLines = 
+		[
+			"k:Black",
+			"n:Brown",
+			"r:Red",
+			"o:Orange",
+			"y:Yellow",
+			"g:Green",
+			"b:Blue",
+			"v:Violet",
+			"a:Gray",
+			"w:White",
+			".:rgba(0, 0, 0, 0)"
+		];
+		var newline = "\n";
+		var colorMappingsAsString = colorMappingsAsLines.join(newline);
+		var colorPalette = ColorPalette.fromString(colorMappingsAsString);
+		return colorPalette;
+	}
+
+	static fromString(colorPaletteAsString)
+	{
+		var newline = "\n";
+		var colorMappingsAsLines = colorPaletteAsString.split(newline);
+		var colorMappings =
+			colorMappingsAsLines.map(x => ColorMapping.fromString(x) );
+		var colorPalette = new ColorPalette(colorMappings);
+		return colorPalette;
+	}
+
+	colorByCode(code)
+	{
+		var mapping = this.colorMappings.find(x => x.code == code);
+		var color = mapping.color;
+		return color;
+	}
+
+	toString()
+	{
+		var newline = "\n";
+		return this.colorMappings.map(x => x.toString() ).join(newline);
+	}
+}
+
+class Coords
+{
+	constructor(x, y)
+	{
+		this.x = x;
+		this.y = y;
+	}
+
+	clone()
+	{
+		return new Coords(this.x, this.y);
+	}
+
+	multiplyScalar(scalar)
+	{
+		this.x *= scalar;
+		this.y *= scalar;
+		return this;
+	}
+
+	overwriteWith(other)
+	{
+		this.x = other.x;
+		this.y = other.y;
+		return this;
+	}
+}
+
+class TextToImageConverter
+{
+	constructor(colorPalette, pixelsPerCell, imageCellsAsString)
+	{
+		this.colorPalette = colorPalette || ColorPalette.default();
+		this.pixelsPerCell = pixelsPerCell || 8;
+		this.imageCellsAsString =
+			imageCellsAsString || TextToImageConverter.imageCellsAsStringDemo();
+	}
+
+	static imageCellsAsStringDemo()
+	{
+		var cellsAsStrings =
+		[
+			"rgby",
+			"yrgb",
+			"byrg",
+			"gbyr",
+		];
+
+		var newline = "\n";
+		var cellsAsString = cellsAsStrings.join(newline);
+
+		return cellsAsString;
+	}
+
+	colorByCode(code)
+	{
+		return this.colorPalette.colorByCode(code);
+	}
+
+	imageSizeInCells()
+	{
+		var newline = "\n";
+		var imageCellsAsStrings = this.imageCellsAsString.split(newline);
+		return new Coords
+		(
+			imageCellsAsStrings[0].length,
+			imageCellsAsStrings.length
+		);
+	}
+
+	toCanvas()
+	{
+		var pixelsPerCell = this.pixelsPerCell;
+
+		var imageSizeInCells = this.imageSizeInCells();
+		var imageSizeInPixels =
+			imageSizeInCells.clone().multiplyScalar(pixelsPerCell);
+
+		var d = document;
+
+		var canvas = d.createElement("canvas");
+		canvas.width = imageSizeInPixels.x ;
+		canvas.height = imageSizeInPixels.y;
+
+		var graphics = canvas.getContext("2d");
+
+		var cellPos = new Coords();
+		var drawPos = new Coords();
+
+		var newline = "\n";
+		var imageCellsAsStrings = this.imageCellsAsString.split(newline);
+
+		for (var y = 0; y < imageSizeInCells.y; y++)
+		{
+			cellPos.y = y;
+
+			var cellRowAsString = imageCellsAsStrings[y];
+
+			for (var x = 0; x < imageSizeInCells.x; x++)
+			{
+				cellPos.x = x;
+
+				var cellCode = cellRowAsString[x];
+				var cellColor = this.colorByCode(cellCode);
+
+				graphics.fillStyle = cellColor;
+
+				drawPos.overwriteWith
+				(
+					cellPos
+				).multiplyScalar
+				(
+					pixelsPerCell
+				);
+
+				graphics.fillRect
+				(
+					drawPos.x, drawPos.y,
+					pixelsPerCell, pixelsPerCell
+				)
+			}
+		}
+
+		return canvas;
+	}
+}
+
+</script>
+
+</body>
+</html>
