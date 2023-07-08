@@ -11,6 +11,11 @@
 	</p>
 
 	<div>
+		<label>Background Color:</label>
+		<input id="inputColorBackgroundAsStringRgb" value="rgb(0, 128, 128)"></input>
+	</div>
+
+	<div>
 		<label>Color Palette:</label>
 		<button onclick="buttonColorPaletteLoadDefault_Clicked()">Load Default</button>
 		<br />
@@ -28,6 +33,7 @@
 		<label>Pixels per Cell:</label>
 		<input id="inputPixelsPerCell" type="number" min="1" max="128" step="1" value="16"></input>
 	</div>
+
 
 	<button onclick="buttonRenderImage_Clicked()">Render Image</button>
 
@@ -67,9 +73,17 @@ function buttonRenderImage_Clicked()
 {
 	var d = document;
 
-	var textareaColorPalette = d.getElementById("textareaColorPalette");
-	var colorPaletteAsString = textareaColorPalette.value;
-	var colorPalette = ColorPalette.fromString(colorPaletteAsString);
+	var inputColorBackgroundAsStringRgb =
+		d.getElementById("inputColorBackgroundAsStringRgb");
+	var colorBackgroundAsStringRgb =
+		inputColorBackgroundAsStringRgb.value;
+
+	var textareaColorPalette =
+		d.getElementById("textareaColorPalette");
+	var colorPaletteAsString =
+		textareaColorPalette.value;
+	var colorPalette =
+		ColorPalette.fromString(colorPaletteAsString);
 
 	var textareaImageCellsAsCharacters =
 		d.getElementById("textareaImageCellsAsCharacters");
@@ -80,6 +94,7 @@ function buttonRenderImage_Clicked()
 
 	var textToImageConverter = new TextToImageConverter
 	(
+		colorBackgroundAsStringRgb,
 		colorPalette,
 		pixelsPerCell,
 		imageCellsAsString
@@ -90,7 +105,6 @@ function buttonRenderImage_Clicked()
 	var divOutput = d.getElementById("divOutput");
 	divOutput.innerHTML = "";
 	divOutput.appendChild(imageRenderedAsCanvas);
-
 }
 
 // Classes.
@@ -135,6 +149,7 @@ class ColorPalette
 			"o:Orange",
 			"y:Yellow",
 			"g:Green",
+			"c:Cyan",
 			"b:Blue",
 			"v:Violet",
 			"a:Gray",
@@ -201,10 +216,20 @@ class Coords
 
 class TextToImageConverter
 {
-	constructor(colorPalette, pixelsPerCell, imageCellsAsString)
+	constructor
+	(
+		colorBackgroundAsStringRgb,
+		colorPalette,
+		pixelsPerCell,
+		imageCellsAsString
+	)
 	{
-		this.colorPalette = colorPalette || ColorPalette.default();
-		this.pixelsPerCell = pixelsPerCell || 8;
+		this.colorBackgroundAsStringRgb =
+			colorBackgroundAsStringRgb || "rgb(0, 128, 128)";
+		this.colorPalette =
+			colorPalette || ColorPalette.default();
+		this.pixelsPerCell =
+			pixelsPerCell || 8;
 		this.imageCellsAsString =
 			imageCellsAsString || TextToImageConverter.imageCellsAsStringDemo();
 	}
@@ -213,10 +238,19 @@ class TextToImageConverter
 	{
 		var cellsAsStrings =
 		[
-			"rgby",
-			"yrgb",
-			"byrg",
-			"gbyr",
+			".............",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			".knroygcbvaw.",
+			"............."
 		];
 
 		var newline = "\n";
@@ -256,6 +290,14 @@ class TextToImageConverter
 		canvas.height = imageSizeInPixels.y;
 
 		var graphics = canvas.getContext("2d");
+
+		graphics.fillStyle =
+			this.colorBackgroundAsStringRgb;
+		graphics.fillRect
+		(
+			0, 0,
+			imageSizeInPixels.x, imageSizeInPixels.y
+		);
 
 		var cellPos = new Coords();
 		var drawPos = new Coords();
